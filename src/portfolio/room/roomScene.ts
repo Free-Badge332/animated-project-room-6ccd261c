@@ -18,10 +18,12 @@ export type RoomCallbacks = {
   onError?: () => void;
   onFocusChange: (focused: boolean) => void;
   onThemeChange: (theme: RoomTheme) => void;
+  onPhoneOpen?: () => void;
   onChooseProject: (urls: { url: string; mobileUrl: string; image?: string; imageOnly?: boolean }) => void;
 };
 export type RoomApi = {
   showAbout: () => void;
+  showPhone: () => void;
   showProjects: (page?: number) => void;
   showSection: (section: ScreenSection, page?: number) => void;
   projectPages: number;
@@ -31,7 +33,7 @@ export type RoomApi = {
 
 export function createRoom(container: HTMLElement, canvas: HTMLCanvasElement, cb: RoomCallbacks): RoomApi {
   let theme: RoomTheme = "light";
-  let bookCover = null, lightSwitch = null, titleText = null, subtitleText = null, mixer = null;
+  let phoneObj = null, bookCover = null, lightSwitch = null, titleText = null, subtitleText = null, mixer = null;
   let disposed = false;
   const isMobile = window.matchMedia("(max-width: 992px)").matches;
   const clipNames = ["fan_rotation", "fan_rotation.001", "fan_rotation.002", "fan_rotation.003", "fan_rotation.004"];
@@ -162,7 +164,9 @@ export function createRoom(container: HTMLElement, canvas: HTMLCanvasElement, cb
         child.material = new THREE.MeshBasicMaterial({ map: bookTexture });
       }
       if (child.name === "SwitchBoard") lightSwitch = child.children[0];
-      if (child.name === "Mobile_Screen" || child.name === "Mobile Screen") {
+      if (child.name === "Mobile" && child.children[0]) {
+        phoneObj = child;
+        const screen = child.children[0];
         // Light the phone screen with contact details; clicking it calls
         const c = document.createElement("canvas"); c.width = 512; c.height = 1024;
         const g = c.getContext("2d");
@@ -175,7 +179,7 @@ export function createRoom(container: HTMLElement, canvas: HTMLCanvasElement, cb
         g.font = "34px sans-serif"; g.fillText("+251 940 715 427", 256, 560);
         g.font = "28px sans-serif"; g.fillText("Tap to call", 256, 640);
         const t = new THREE.CanvasTexture(c); t.flipY = false; t.colorSpace = THREE.SRGBColorSpace;
-        child.material = new THREE.MeshBasicMaterial({ map: t });
+        screen.material = new THREE.MeshBasicMaterial({ map: t });
       }
     });
 
@@ -289,6 +293,21 @@ export function createRoom(container: HTMLElement, canvas: HTMLCanvasElement, cb
     if (theme !== "dark") gsap.to(roomLight, { intensity: 1, duration: 1.5 });
     gsap.delayedCall(1.5, () => cb.onFocusChange(true));
   }
+  function showPhone() {
+    if (!phoneObj) return;
+    if (titleText) titleText.visible = true;
+    if (subtitleText) subtitleText.visible = true;
+    activeSection = null;
+    clearSection(); resetBookCover(); resetProjects(); controls.enabled = false;
+    const target = new THREE.Vector3(); phoneObj.getWorldPosition(target);
+    const dir = new THREE.Vector3(defaultCameraPos.x, defaultCameraPos.y, defaultCameraPos.z).sub(target).setY(0).normalize();
+    const end = target.clone().add(dir.multiplyScalar(0.18)).add(new THREE.Vector3(0, 0.32, 0));
+    gsap.killTweensOf(camera.position); gsap.killTweensOf(camera.rotation); gsap.killTweensOf(camera);
+    gsap.to(camera.position, { x: end.x, y: end.y, z: end.z, duration: 1.5, onUpdate: () => camera.lookAt(target) });
+    zoomTo(1);
+    if (theme !== "dark") gsap.to(roomLight, { intensity: 1.2, duration: 1.5 });
+    gsap.delayedCall(1.5, () => { cb.onFocusChange(true); cb.onPhoneOpen?.(); });
+  }
   const fitScale = () => (camera.aspect < 1 ? Math.min(1, Math.max(0.5, camera.aspect * 1.3)) : 1);
   const zoomTo = (z) => gsap.to(camera, { zoom: z * fitScale(), duration: 1.5, onUpdate: () => camera.updateProjectionMatrix() });
   function showProjects() {
@@ -371,7 +390,7 @@ export function createRoom(container: HTMLElement, canvas: HTMLCanvasElement, cb
         return;
       }
       if (name === "Book" || name === "Book001") { showAbout(); return; }
-      if (name === "Mobile" || name === "Mobile_Screen" || name === "Mobile Screen") { window.location.href = "tel:+251940715427"; return; }
+      if (name === "Mobile" || name === "Mobile_Screen" || name === "Mobile Screen") { showPhone(); return; }
       if ((name === "SwitchBoard" || name === "Switch") && !themeToggled) { themeToggled = true; switchTheme(nextTheme); return; }
     }
   };
@@ -439,7 +458,7 @@ export function createRoom(container: HTMLElement, canvas: HTMLCanvasElement, cb
   });
 
   return {
-    showAbout, showProjects, showSection, reset,
+    showAbout, showPhone, showProjects, showSection, reset,
     projectPages: Math.ceil(projects.length / ROOM_PAGE_SIZE),
     dispose() {
       disposed = true;

@@ -11,6 +11,7 @@ import { roomIsReady, roomLoadingProgress } from "../room/readiness";
 import { wallLayout } from "../room/wallLayout";
 import RoomCharacter from "./RoomCharacter";
 import ContactForm from "./ContactForm";
+import PhoneContacts from "./PhoneContacts";
 import portrait from "@/assets/ezadin-portrait-2.png.asset.json";
 import "./styles/Room.css";
 
@@ -37,6 +38,7 @@ const RoomHome = () => {
       onProgress: (pct) => setProgress(p => Math.max(p, pct)), onError,
       onFocusChange: setFocused,
       onThemeChange: t => setDark(t === "dark"),
+      onPhoneOpen: () => { setSection("phone"); setOpen(false); },
       onChooseProject: c => { setView(c.url ? "url" : "mobileUrl"); setChoice(c); },
     });
     api.current = room;
@@ -81,7 +83,7 @@ const RoomHome = () => {
         {Object.keys(screenSectionTitles).map(key => { const Icon = icons[key]; return <Button variant="ghost" key={key} data-active={section === key} disabled={!loaded} onClick={() => choose(key)}><Icon />{screenSectionTitles[key]}</Button>; })}
         <div className="room-nav-links"><Button asChild variant="ghost"><a href={resumeUrl} download="Ezadin_Resume.pdf"><Download />Download resume</a></Button><Button asChild variant="ghost"><a href="https://github.com/ezadin2" target="_blank" rel="noopener noreferrer"><Github />More on GitHub</a></Button><Button asChild variant="ghost"><a href="mailto:ezadinbadru55@gmail.com"><Mail />Email me</a></Button><Button asChild variant="ghost"><a href="https://www.linkedin.com/in/ezadinbadru/" target="_blank" rel="noopener noreferrer"><ExternalLink />LinkedIn</a></Button></div>
       </nav>
-      {focused && section && section !== "contact" && <div className="room-section-caption"><span>{screenSectionTitles[section] || (section === "about" ? "About me" : "Selected projects")}</span>{pages > 1 && <div className="room-pagination"><Button variant="ghost" size="icon" aria-label="Previous wall page" disabled={page === 0} onClick={() => changePage(page - 1)}><ArrowLeft /></Button><span>{page + 1} / {pages}</span><Button variant="ghost" size="icon" aria-label="Next wall page" disabled={page === pages - 1} onClick={() => changePage(page + 1)}><ArrowRight /></Button></div>}<Button variant="ghost" size="icon" aria-label="Back to room" onClick={back}><X /></Button></div>}
+      {focused && section && section !== "contact" && section !== "phone" && <div className="room-section-caption"><span>{screenSectionTitles[section] || (section === "about" ? "About me" : "Selected projects")}</span>{pages > 1 && <div className="room-pagination"><Button variant="ghost" size="icon" aria-label="Previous wall page" disabled={page === 0} onClick={() => changePage(page - 1)}><ArrowLeft /></Button><span>{page + 1} / {pages}</span><Button variant="ghost" size="icon" aria-label="Next wall page" disabled={page === pages - 1} onClick={() => changePage(page + 1)}><ArrowRight /></Button></div>}<Button variant="ghost" size="icon" aria-label="Back to room" onClick={back}><X /></Button></div>}
       {section === "about" && <figure className="room-about-photo"><img src={portrait.url} alt="Ezadin Badiru" /><figcaption><strong>Ezadin Badiru</strong><span>Full-stack & Flutter developer · Addis Ababa</span></figcaption></figure>}
       {focused && section === "contact" && (
         <div className="room-contact-backdrop" onClick={back}>
@@ -92,6 +94,7 @@ const RoomHome = () => {
           </aside>
         </div>
       )}
+      {focused && section === "phone" && <PhoneContacts onClose={back} />}
       {choice && <div className="room-choice" onClick={() => setChoice(null)}><div className="room-choice-wide" onClick={e => e.stopPropagation()}>{choice.imageOnly ? <><div className="room-choice-toolbar"><Button asChild variant="outline"><a href={GITHUB_PROFILE} target="_blank" rel="noopener noreferrer">View on GitHub ↗</a></Button><Button variant="outline" size="icon" aria-label="Close project" onClick={() => setChoice(null)}><X /></Button></div><div className="room-project"><img src={choice.image} alt="Project screenshot" /></div></> : <><div className="room-choice-toolbar">{choice.url && <Button variant="outline" onClick={() => setView("url")}>Web</Button>}{choice.mobileUrl && <Button variant="outline" onClick={() => setView("mobileUrl")}>Mobile / Admin</Button>}<Button variant="outline" size="icon" aria-label="Close project" onClick={() => setChoice(null)}><X /></Button></div><div className="room-project"><iframe src={choice[view] || choice.url || choice.mobileUrl} title="Project preview" /></div></>}</div></div>}
     </div>
   );
