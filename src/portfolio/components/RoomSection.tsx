@@ -34,7 +34,7 @@ const RoomSection = () => {
     <section className={`room-section ${dark ? "room-dark" : ""}`} id="room">
       <div className="room-head">
         <h2>My <span>Room</span></h2>
-        <p>Drag to look around. Click the book to read about me, the light switch for night mode, or a project on the screen to open it.</p>
+        <p>Drag to look around. Click the book to read about me, the light switch for night mode, the phone to call me, or a project on the screen to open it.</p>
       </div>
       <div className="room-stage" ref={wrap}>
         <canvas ref={canvas} className="room-canvas" />

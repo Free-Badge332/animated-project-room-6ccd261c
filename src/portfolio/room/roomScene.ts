@@ -162,6 +162,21 @@ export function createRoom(container: HTMLElement, canvas: HTMLCanvasElement, cb
         child.material = new THREE.MeshBasicMaterial({ map: bookTexture });
       }
       if (child.name === "SwitchBoard") lightSwitch = child.children[0];
+      if (child.name === "Mobile_Screen" || child.name === "Mobile Screen") {
+        // Light the phone screen with contact details; clicking it calls
+        const c = document.createElement("canvas"); c.width = 512; c.height = 1024;
+        const g = c.getContext("2d");
+        const grad = g.createLinearGradient(0, 0, 0, 1024);
+        grad.addColorStop(0, "#1f6f5c"); grad.addColorStop(1, "#0d2b3a");
+        g.fillStyle = grad; g.fillRect(0, 0, 512, 1024);
+        g.fillStyle = "#ffffff"; g.textAlign = "center";
+        g.font = "bold 64px sans-serif"; g.fillText("📞", 256, 380);
+        g.font = "bold 44px sans-serif"; g.fillText("Call me", 256, 480);
+        g.font = "34px sans-serif"; g.fillText("+251 940 715 427", 256, 560);
+        g.font = "28px sans-serif"; g.fillText("Tap to call", 256, 640);
+        const t = new THREE.CanvasTexture(c); t.flipY = false; t.colorSpace = THREE.SRGBColorSpace;
+        child.material = new THREE.MeshBasicMaterial({ map: t });
+      }
     });
 
     scene.add(room.scene);
@@ -356,6 +371,7 @@ export function createRoom(container: HTMLElement, canvas: HTMLCanvasElement, cb
         return;
       }
       if (name === "Book" || name === "Book001") { showAbout(); return; }
+      if (name === "Mobile" || name === "Mobile_Screen" || name === "Mobile Screen") { window.location.href = "tel:+251940715427"; return; }
       if ((name === "SwitchBoard" || name === "Switch") && !themeToggled) { themeToggled = true; switchTheme(nextTheme); return; }
     }
   };
